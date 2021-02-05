@@ -772,11 +772,6 @@ def api_list_accounts(account_name):
 @api_bp.route('/pdnsadmin/accounts', methods=['POST'])
 @api_basic_auth
 def api_create_account():
-    account_exists = [] or Account.query.filter(Account.name == account_name).all()
-    if len(account_exists) > 0:
-        msg = "Account name already exists"
-        current_app.logger.debug(msg)
-        raise AccountCreateFail(message=msg)
     if current_user.role.name not in ['Administrator', 'Operator']:
         msg = "{} role cannot create accounts".format(current_user.role.name)
         raise NotEnoughPrivileges(message=msg)
@@ -788,6 +783,12 @@ def api_create_account():
     if not name:
         current_app.logger.debug("Account name missing")
         abort(400)
+
+    account_exists = [] or Account.query.filter(Account.name == name).all()
+    if len(account_exists) > 0:
+        msg = "Account name already exists"
+        current_app.logger.debug(msg)
+        raise AccountCreateFail(message=msg)
 
     account = Account(name=name,
                       description=description,
@@ -1023,7 +1024,7 @@ def api_get_zones(server_id):
         return jsonify(domain_schema.dump(domain_obj_list)), 200
     else:
         resp = helper.forward_request()
-        if (g.apikey.role.name not in ['Administrator', 'Operator']
+        if False and (g.apikey.role.name not in ['Administrator', 'Operator']
             and resp.status_code == 200):
             domain_list = [d['name']
                            for d in domain_schema.dump(g.apikey.domains)]
